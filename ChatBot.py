@@ -12,16 +12,17 @@ Pose-moi une question technique, je suis là pour ça.
 """)
 
 # --- GESTION DE LA CLE API (Sécurité) ---
-# On récupère la clé depuis les "Secrets" de Streamlit (voir tuto déploiement)
 try:
+    # On cherche la clé dans les secrets Streamlit (.streamlit/secrets.toml)
     api_key = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=api_key)
 except Exception:
-    st.error("Erreur : Clé API manquante. Ajoute-la dans les secrets Streamlit.")
+    st.error("⚠️ Erreur : Clé API introuvable.")
+    st.info("Crée un dossier .streamlit et un fichier secrets.toml avec ta clé GOOGLE_API_KEY.")
     st.stop()
 
 # --- DEFINITION DU CERVEAU (MODEL) ---
-# C'est ici qu'on donne la personnalité à l'IA
+# 1. La personnalité de l'IA
 system_instruction = """
 Tu es un assistant spécialisé EXCLUSIVEMENT dans l'informatique, le développement logiciel, 
 la data science et les technologies numériques.
@@ -30,17 +31,21 @@ SI l'utilisateur te pose une question qui n'a AUCUN rapport avec l'informatique 
 refuse poliment de répondre en disant que tu es programmé uniquement pour la tech.
 """
 
-# MODIFICATION ICI : On passe sur "gemini-pro" qui est plus stable
-model = genai.GenerativeModel(
-    model_name="gemini-pro", 
-    # Note : gemini-pro ne supporte pas toujours "system_instruction" dans les vieilles versions.
-    # Si ça plante encore, enlève la ligne "system_instruction=..." ici et on la mettra ailleurs.
-)
+# 2. Le choix du modèle (CORRECTION ICI : On utilise le 1.5 Flash)
+try:
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash", # Le modèle rapide et actuel
+        system_instruction=system_instruction # On lui donne sa personnalité ici !
+    )
+except Exception as e:
+    st.error(f"Erreur de chargement du modèle : {e}")
+    st.stop()
 
 # --- MEMOIRE DE LA CONVERSATION ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Initialisation du chat avec l'historique
 if "chat_session" not in st.session_state:
     st.session_state.chat_session = model.start_chat(history=[])
 
@@ -60,6 +65,7 @@ if user_input:
 
     # 2. Envoyer à l'IA et récupérer la réponse
     try:
+        # On envoie le message à la session de chat
         response = st.session_state.chat_session.send_message(user_input)
         bot_reply = response.text
         
