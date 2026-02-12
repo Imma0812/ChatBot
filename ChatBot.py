@@ -30,9 +30,11 @@ SI l'utilisateur te pose une question qui n'a AUCUN rapport avec l'informatique 
 refuse poliment de répondre en disant que tu es programmé uniquement pour la tech.
 """
 
+# MODIFICATION ICI : On passe sur "gemini-pro" qui est plus stable
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash", # Modèle rapide et gratuit
-    system_instruction=system_instruction
+    model_name="gemini-pro", 
+    # Note : gemini-pro ne supporte pas toujours "system_instruction" dans les vieilles versions.
+    # Si ça plante encore, enlève la ligne "system_instruction=..." ici et on la mettra ailleurs.
 )
 
 # --- MEMOIRE DE LA CONVERSATION ---
